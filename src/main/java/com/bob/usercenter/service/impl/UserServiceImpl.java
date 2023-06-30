@@ -12,7 +12,6 @@ import org.springframework.util.DigestUtils;
 
 import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Date;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -104,7 +103,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //  查询用户是否存在
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount",userAccount);
-        queryWrapper.eq("userPassword",userPassword);
+        queryWrapper.eq("userPassword",encryptPassword);
         User user = userMapper.selectOne(queryWrapper);
         //  用户不存在
         if(user==null){
@@ -112,21 +111,34 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
             return null;
         }
         //  3.用户脱敏
-        User safetyUser = new User();
-        safetyUser.setId(user.getId());
-        safetyUser.setUserAccount(user.getUserAccount());
-        safetyUser.setUsername(user.getUsername());
-        safetyUser.setAvatarUrl(user.getAvatarUrl());
-        safetyUser.setGender(user.getGender());
-        safetyUser.setPhone(user.getPhone());
-        safetyUser.setEmail(user.getEmail());
-        safetyUser.setUserRole(user.getUserRole());
-        safetyUser.setUserStatus(user.getUserStatus());
-        safetyUser.setCreateTime(user.getCreateTime());
+        User safetyUser = getSafetyUser(user);
         //  4.记录用户的登录态
         request.getSession().setAttribute(UESR_LOGIN_STATE,safetyUser);
+        return safetyUser;
+    }
 
-
+    /**
+     *
+     *用户脱敏
+     * @param originuser
+     * @return
+     */
+    @Override
+    public User getSafetyUser(User originuser){
+        if(originuser ==null){
+            return null;
+        }
+        User safetyUser = new User();
+        safetyUser.setId(originuser.getId());
+        safetyUser.setUserAccount(originuser.getUserAccount());
+        safetyUser.setUsername(originuser.getUsername());
+        safetyUser.setAvatarUrl(originuser.getAvatarUrl());
+        safetyUser.setGender(originuser.getGender());
+        safetyUser.setPhone(originuser.getPhone());
+        safetyUser.setEmail(originuser.getEmail());
+        safetyUser.setUserRole(originuser.getUserRole());
+        safetyUser.setUserStatus(originuser.getUserStatus());
+        safetyUser.setCreateTime(originuser.getCreateTime());
         return safetyUser;
     }
 }

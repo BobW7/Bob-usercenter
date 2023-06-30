@@ -76,7 +76,7 @@ public class User implements Serializable {
     private Integer isDelete;
 
     /**
-     * 用户角色 0 - 普通用户 1 - 管理员 2 - VIP
+     * 用户角色: 0 - 普通用户  1 - 管理员  2 - VIP
 
      */
     private Integer userRole;

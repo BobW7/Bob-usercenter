@@ -12,6 +12,7 @@ import javax.annotation.Resource;
 import javax.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static com.bob.usercenter.constant.UserConstant.ADMIN_ROLE;
 import static com.bob.usercenter.constant.UserConstant.UESR_LOGIN_STATE;
@@ -65,7 +66,11 @@ public class UserController {
                 if (StringUtils.isNotBlank(username)){
                     queryWrapper.like("username",username);
                 }
-        return userService.list(queryWrapper);
+                List<User> userList = userService.list(queryWrapper);
+                return userList.stream().map(user -> {
+                    user.setUserPassword(null);
+                    return userService.getSafetyUser(user);
+                }).collect(Collectors.toList());
     }
 
     @PostMapping("/delete")
@@ -88,10 +93,7 @@ public class UserController {
         //鉴权，仅管理员可查询
         Object userObj = request.getSession().getAttribute(UESR_LOGIN_STATE);
         User user = (User) userObj;
-        if(user == null||user.getUserRole()!=ADMIN_ROLE){
-            return false;
-        }
-        return true;
+        return user != null && user.getUserRole() == ADMIN_ROLE;
     }
 
 }
