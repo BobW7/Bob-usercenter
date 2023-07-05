@@ -2,6 +2,8 @@ package com.bob.usercenter.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.bob.usercenter.common.ErrorCode;
+import com.bob.usercenter.exception.BusinessException;
 import com.bob.usercenter.service.UserService;
 import com.bob.usercenter.model.User;
 import com.bob.usercenter.mapper.UserMapper;
@@ -40,18 +42,22 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public long userRegister(String userAccount, String userPassword, String checkPassword) {
         // 1. 校验
         if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"存在空参数");
         }
         if(userAccount.length()<4)
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户长度小于四位");
+
         if(userPassword.length()<8||checkPassword.length()<8)
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码长度小于八位");
+
         // 校验账户不能包含特殊字符
         String validPatter = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPatter).matcher(userAccount);
+
         if(matcher.find()){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户中包含特殊字符");
         }
+
         //  账户不能重复
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
         queryWrapper.eq("userAccount",userAccount);
@@ -140,6 +146,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         safetyUser.setUserStatus(originuser.getUserStatus());
         safetyUser.setCreateTime(originuser.getCreateTime());
         return safetyUser;
+    }
+
+    /**
+     * 用户注销
+     * @param request
+     */
+    @Override
+    public int userLogout(HttpServletRequest request) {
+        //移除登录态
+        request.getSession().removeAttribute(UESR_LOGIN_STATE);
+        return 1;
     }
 }
 

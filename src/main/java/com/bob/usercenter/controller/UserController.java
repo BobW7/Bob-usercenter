@@ -1,6 +1,10 @@
 package com.bob.usercenter.controller;
 
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
+import com.bob.usercenter.common.BaseResponse;
+import com.bob.usercenter.common.ErrorCode;
+import com.bob.usercenter.common.ResultUtils;
+import com.bob.usercenter.exception.BusinessException;
 import com.bob.usercenter.model.User;
 import com.bob.usercenter.model.request.UserLoginRequest;
 import com.bob.usercenter.model.request.UserRegisterRequest;
@@ -29,10 +33,10 @@ public class UserController {
     @Resource
     private UserService userService;
     @PostMapping("/register")
-    public Long userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
+    public BaseResponse<Long> userRegister(@RequestBody UserRegisterRequest userRegisterRequest){
         if(userRegisterRequest == null)
         {
-            return null;
+           throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         String userAccount = userRegisterRequest.getUserAccount();
         String userPassword = userRegisterRequest.getUserPassword();
@@ -40,11 +44,12 @@ public class UserController {
         if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
             return null;
         }
-        return userService.userRegister(userAccount,userPassword,checkPassword);
+        long result = userService.userRegister(userAccount,userPassword,checkPassword);
+        return ResultUtils.success(result);
 }
 
     @PostMapping("/login")
-    public User userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
+    public BaseResponse<User> userLogin(@RequestBody UserLoginRequest userLoginRequest, HttpServletRequest request){
         if(userLoginRequest == null)
         {
             return null;
@@ -54,34 +59,58 @@ public class UserController {
         if(StringUtils.isAnyBlank(userAccount,userPassword)){
             return null;
         }
-        return userService.userLogin(userAccount,userPassword,request);
+        User user = userService.userLogin(userAccount,userPassword,request);
+        return ResultUtils.success(user);
     }
 
+    @GetMapping("/current")
+    public BaseResponse<User> getCurrentUser(HttpServletRequest request){
+        Object userObj = request.getSession().getAttribute(UESR_LOGIN_STATE);
+        User currentUser = (User) userObj;
+        if(currentUser == null){
+            return null ;
+        }
+
+        Long userId = currentUser.getId();
+        // todo 校验用户是否合法
+        User user = userService.getById(userId);
+        User safetyUser = userService.getSafetyUser(user);
+        return ResultUtils.success(safetyUser);
+    }
     @GetMapping("/search")
-    public List<User> searchUsers(String username,HttpServletRequest request){
+    public BaseResponse<List<User>> searchUsers(String username,HttpServletRequest request){
         if(!isAdmin(request)){
-            return new ArrayList<>();
+           throw new BusinessException(ErrorCode.PARAMS_ERROR);
         }
         QueryWrapper<User> queryWrapper = new QueryWrapper<>();
                 if (StringUtils.isNotBlank(username)){
                     queryWrapper.like("username",username);
                 }
                 List<User> userList = userService.list(queryWrapper);
-                return userList.stream().map(user -> {
-                    user.setUserPassword(null);
-                    return userService.getSafetyUser(user);
-                }).collect(Collectors.toList());
+        List<User> list = userList.stream().map(user -> {user.setUserPassword(null);return userService.getSafetyUser(user);}).collect(Collectors.toList());
+        return ResultUtils.success(list);
     }
 
     @PostMapping("/delete")
-    public boolean deleteUser(@RequestBody long id,HttpServletRequest request){
+    public BaseResponse<Boolean> deleteUser(@RequestBody long id,HttpServletRequest request){
         if(!isAdmin(request)){
-            return false;
+            return null;
         }
         if(id<=0){
-            return false;
+            return null;
         }
-        return userService.removeById(id);
+        boolean b = userService.removeById(id);
+        return ResultUtils.success(b);
+    }
+
+    @PostMapping("/logout")
+    public BaseResponse<Integer> userLogout( HttpServletRequest request){
+        if(request == null)
+        {
+            return null;
+        }
+        int result = userService.userLogout(request);
+        return ResultUtils.success(result);
     }
 
     /**
