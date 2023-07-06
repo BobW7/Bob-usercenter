@@ -1,0 +1,10 @@
+#file: noinspection SpellCheckingInspection
+spring:
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: 'jdbc:mysql://sh-cynosdbmysql-grp-c2ve2pko.sql.tencentcdb.com:21727/bob'
+    username: "root"
+    password: "Allfor18!"
+server:
+  port: 8080
+  address: 0.0.0.0

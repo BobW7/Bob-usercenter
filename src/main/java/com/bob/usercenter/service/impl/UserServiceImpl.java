@@ -44,11 +44,13 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         if(StringUtils.isAnyBlank(userAccount,userPassword,checkPassword)){
             throw new BusinessException(ErrorCode.PARAMS_ERROR,"存在空参数");
         }
-        if(userAccount.length()<4)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户长度小于四位");
+        if(userAccount.length()<4) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "账户长度小于四位");
+        }
 
-        if(userPassword.length()<8||checkPassword.length()<8)
-            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码长度小于八位");
+        if(userPassword.length()<8||checkPassword.length()<8) {
+            throw new BusinessException(ErrorCode.PARAMS_ERROR, "密码长度小于八位");
+        }
 
         // 校验账户不能包含特殊字符
         String validPatter = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
@@ -63,7 +65,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         queryWrapper.eq("userAccount",userAccount);
         long count = userMapper.selectCount(queryWrapper);
         if(count>0){
-            return -1;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账号重复");
         }
         // 密码和校验密码相同
         if(!userPassword.equals(checkPassword)){
@@ -80,7 +82,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         boolean saveResult = this.save(user);
 
         if(!saveResult) {
-            return -1;
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"数据库保存错误");
         }
 
         return user.getId();
@@ -90,18 +92,17 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
     public User userLogin(String userAccount, String userPassword, HttpServletRequest request) {
         // 1. 校验
         if(StringUtils.isAnyBlank(userAccount,userPassword)){
-            // todo 修改为自定义异常
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_NULL_ERROR,"账号或密码为空");
         }
         if(userAccount.length()<4)
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账号过短");
         if(userPassword.length()<8)
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"密码过短");
         // 校验账户不能包含特殊字符
         String validPatter = "[`~!@#$%^&*()+=|{}':;',\\\\[\\\\].<>/?~！@#￥%……&*（）——+|{}【】‘；：”“’。，、？]";
         Matcher matcher = Pattern.compile(validPatter).matcher(userAccount);
         if(matcher.find()){
-            return null;
+            throw new BusinessException(ErrorCode.PARAMS_ERROR,"账户中包含特殊字符");
         }
 
         // 2. 加密
@@ -114,7 +115,7 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>
         //  用户不存在
         if(user==null){
             log.info("user Log in failed,userAccount can't match userPassword");
-            return null;
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR,"用户不存在");
         }
         //  3.用户脱敏
         User safetyUser = getSafetyUser(user);

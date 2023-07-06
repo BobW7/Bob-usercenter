@@ -11,6 +11,7 @@ import java.io.Serializable;
  * @author SuperBob
  */
 
+@Data
 public class BaseResponse<T> implements Serializable {
 
     private int code;
