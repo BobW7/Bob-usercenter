@@ -24,6 +24,10 @@ import static com.bob.usercenter.constant.UserConstant.UESR_LOGIN_STATE;
 * @description 针对表【user(用户表)】的数据库操作Service实现
 * @createDate 2023-06-08 21:19:43
 */
+
+/**
+ * 对业务逻辑的校验
+ */
 @Service
 @Slf4j
 

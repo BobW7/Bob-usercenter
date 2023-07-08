@@ -26,6 +26,10 @@ import static com.bob.usercenter.constant.UserConstant.UESR_LOGIN_STATE;
  *
  * @author SuperBob
  */
+
+/**
+ * 倾向于对请求参数本身的校验，不涉及业务逻辑本身
+ */
 @RestController
 @RequestMapping("/user")
 public class UserController {
